@@ -8,10 +8,17 @@ const {
   deleteSubject
 } = require('../controllers/subjectController');
 
+const { body } = require('express-validator');
+
+// Validation middleware
+const validateCoachingCenter = [
+  body('title').notEmpty().withMessage('Title is required')
+];
+
 router.get('/', getAllSubjects);
 router.get('/:id', getSubjectById);
-router.post('/', createSubject);
-router.put('/:id', updateSubject);
+router.post('/', validateCoachingCenter, createSubject);
+router.put('/:id', validateCoachingCenter, updateSubject);
 router.delete('/:id', deleteSubject);
 
 module.exports = router;

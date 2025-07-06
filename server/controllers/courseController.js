@@ -1,14 +1,14 @@
 const Course = require('../models/Course');
+const { validationResult } = require('express-validator');
 
 // GET /api/courses
-exports.getAllCourses = async (req, res) => {
+exports.getAllCourses = async (req, res, next) => {
   try {
     const { duration, page = 1 } = req.query;
     const limit = 5;
     const skip = (page - 1) * limit;
 
     let filters = {};
-
     if (duration) filters.duration = { $lte: Number(duration) };
 
     const total = await Course.countDocuments(filters);
@@ -25,25 +25,39 @@ exports.getAllCourses = async (req, res) => {
       data: courses,
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // GET /api/courses/:id
-exports.getCourseById = async (req, res) => {
+exports.getCourseById = async (req, res, next) => {
   try {
-    const course = await Course.findById(req.params.id).populate('coachingCenter').populate('subject');
+    const course = await Course.findById(req.params.id)
+      .populate('coachingCenter')
+      .populate('subject');
+
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      const error = new Error('Course not found');
+      error.statusCode = 404;
+      return next(error);
     }
+
     res.status(200).json(course);
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // POST /api/courses
-exports.createCourse = async (req, res) => {
+exports.createCourse = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const { title, description, duration, learners, subject, coachingCenter } = req.body;
 
@@ -59,38 +73,50 @@ exports.createCourse = async (req, res) => {
     const saved = await newCourse.save();
     res.status(201).json(saved);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to add new course', error: err.message });
+    next(err);
   }
 };
 
 // PUT /api/courses/:id
-exports.updateCourse = async (req, res) => {
+exports.updateCourse = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const updated = await Course.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).populate('coachingCenter').populate('subject');
 
     if (!updated) {
-      return res.status(404).json({ message: 'Course not found' });
+      const error = new Error('Course not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json(updated);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to update', error: err.message });
+    next(err);
   }
 };
 
-// DELETE /api/couses/:id
-exports.deleteCourse = async (req, res) => {
+// DELETE /api/courses/:id
+exports.deleteCourse = async (req, res, next) => {
   try {
     const deleted = await Course.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Course not found' });
+      const error = new Error('Course not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({ message: 'Course deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Delete failed', error: err.message });
+    next(err);
   }
 };

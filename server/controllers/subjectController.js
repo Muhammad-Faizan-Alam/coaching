@@ -1,7 +1,8 @@
 const Subject = require('../models/Subject');
+const { validationResult } = require('express-validator');
 
 // GET /api/subjects
-exports.getAllSubjects = async (req, res) => {
+exports.getAllSubjects = async (req, res, next) => {
   try {
     const { page = 1 } = req.query;
     const limit = 5;
@@ -21,69 +22,95 @@ exports.getAllSubjects = async (req, res) => {
       data: subjects,
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // GET /api/subjects/:id
-exports.getSubjectById = async (req, res) => {
+exports.getSubjectById = async (req, res, next) => {
   try {
-    const subject = await Subject.findById(req.params.id).populate('tests').populate('courses');
+    const subject = await Subject.findById(req.params.id)
+      .populate('tests')
+      .populate('courses');
+
     if (!subject) {
-      return res.status(404).json({ message: 'Subject not found' });
+      const error = new Error('Subject not found');
+      error.statusCode = 404;
+      return next(error);
     }
+
     res.status(200).json(subject);
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // POST /api/subjects
-exports.createSubject = async (req, res) => {
+exports.createSubject = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const { title, tests, courses } = req.body;
 
     const newSubject = new Subject({
       title,
       tests,
-      courses
+      courses,
     });
 
     const saved = await newSubject.save();
     res.status(201).json(saved);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to add new subject', error: err.message });
+    next(err);
   }
 };
 
 // PUT /api/subjects/:id
-exports.updateSubject = async (req, res) => {
+exports.updateSubject = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const updated = await Subject.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).populate('tests').populate('courses');
 
     if (!updated) {
-      return res.status(404).json({ message: 'Subject not found' });
+      const error = new Error('Subject not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json(updated);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to update', error: err.message });
+    next(err);
   }
 };
 
 // DELETE /api/subjects/:id
-exports.deleteSubject = async (req, res) => {
+exports.deleteSubject = async (req, res, next) => {
   try {
     const deleted = await Subject.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Subject not found' });
+      const error = new Error('Subject not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({ message: 'Subject deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Delete failed', error: err.message });
+    next(err);
   }
 };

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const CourseSchema = new mongoose.Schema({
-    title: {type: String, require: true},
+    title: {type: String, required: true},
     description: {type: String},
     duration: Number,
     learners: Number,

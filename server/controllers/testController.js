@@ -1,7 +1,8 @@
 const Test = require('../models/Test');
+const { validationResult } = require('express-validator');
 
 // GET /api/tests
-exports.getAllTests = async (req, res) => {
+exports.getAllTests = async (req, res, next) => {
   try {
     const { page = 1 } = req.query;
     const limit = 5;
@@ -20,25 +21,35 @@ exports.getAllTests = async (req, res) => {
       data: tests,
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // GET /api/tests/:id
-exports.getTestById = async (req, res) => {
+exports.getTestById = async (req, res, next) => {
   try {
     const test = await Test.findById(req.params.id).populate('subjects');
     if (!test) {
-      return res.status(404).json({ message: 'Test not found' });
+      const error = new Error('Test not found');
+      error.statusCode = 404;
+      return next(error);
     }
     res.status(200).json(test);
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // POST /api/tests
-exports.createTest = async (req, res) => {
+exports.createTest = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const { title, description, year, hours, questions, subjects } = req.body;
 
@@ -48,44 +59,56 @@ exports.createTest = async (req, res) => {
       year,
       hours,
       questions,
-      subjects
+      subjects,
     });
 
     const saved = await newTest.save();
     res.status(201).json(saved);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to add new test', error: err.message });
+    next(err);
   }
 };
 
 // PUT /api/tests/:id
-exports.updateTest = async (req, res) => {
+exports.updateTest = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
-    const updated = await Subject.findByIdAndUpdate(req.params.id, req.body, {
+    const updated = await Test.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).populate('subjects');
 
     if (!updated) {
-      return res.status(404).json({ message: 'Test not found' });
+      const error = new Error('Test not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json(updated);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to update', error: err.message });
+    next(err);
   }
 };
 
 // DELETE /api/tests/:id
-exports.deleteTest = async (req, res) => {
+exports.deleteTest = async (req, res, next) => {
   try {
     const deleted = await Test.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Test not found' });
+      const error = new Error('Test not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({ message: 'Test deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Delete failed', error: err.message });
+    next(err);
   }
 };

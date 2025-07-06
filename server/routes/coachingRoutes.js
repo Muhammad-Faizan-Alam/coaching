@@ -5,13 +5,24 @@ const {
   getCoachingCenterById,
   createCoachingCenter,
   updateCoachingCenter,
-  deleteCoachingCenter
+  deleteCoachingCenter,
 } = require('../controllers/coachingController');
+
+const { body } = require('express-validator');
+
+// Validation middleware
+const validateCoachingCenter = [
+  body('name').notEmpty().withMessage('Name is required'),
+  body('city').notEmpty().withMessage('City is required'),
+  body('rating').optional().isNumeric().withMessage('Rating must be a number'),
+  body('minFee').isNumeric().withMessage('Minimum fee must be a number'),
+  body('maxFee').isNumeric().withMessage('Maximum fee must be a number'),
+];
 
 router.get('/', getAllCoachingCenters);
 router.get('/:id', getCoachingCenterById);
-router.post('/', createCoachingCenter);
-router.put('/:id', updateCoachingCenter);
+router.post('/', validateCoachingCenter, createCoachingCenter);
+router.put('/:id', validateCoachingCenter, updateCoachingCenter);
 router.delete('/:id', deleteCoachingCenter);
 
 module.exports = router;

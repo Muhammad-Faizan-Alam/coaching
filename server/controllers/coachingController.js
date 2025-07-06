@@ -1,14 +1,14 @@
 const CoachingCenter = require('../models/CoachingCenter');
+const { validationResult } = require('express-validator');
 
 // GET /api/coaching-centers
-exports.getAllCoachingCenters = async (req, res) => {
+exports.getAllCoachingCenters = async (req, res, next) => {
   try {
     const { city, rating, minFee, page = 1 } = req.query;
     const limit = 5;
     const skip = (page - 1) * limit;
 
     let filters = {};
-
     if (city) filters.city = city;
     if (rating) filters.rating = { $gte: Number(rating) };
     if (minFee) filters.minFee = { $gte: Number(minFee) };
@@ -26,25 +26,35 @@ exports.getAllCoachingCenters = async (req, res) => {
       data: centers,
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // GET /api/coaching-centers/:id
-exports.getCoachingCenterById = async (req, res) => {
+exports.getCoachingCenterById = async (req, res, next) => {
   try {
     const center = await CoachingCenter.findById(req.params.id).populate('courses');
     if (!center) {
-      return res.status(404).json({ message: 'Coaching Center not found' });
+      const error = new Error('Coaching Center not found');
+      error.statusCode = 404;
+      return next(error);
     }
     res.status(200).json(center);
   } catch (err) {
-    res.status(500).json({ message: 'Server Error', error: err.message });
+    next(err);
   }
 };
 
 // POST /api/coaching-centers
-exports.createCoachingCenter = async (req, res) => {
+exports.createCoachingCenter = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const { name, city, rating, reviews, minFee, maxFee, courses } = req.body;
 
@@ -61,38 +71,50 @@ exports.createCoachingCenter = async (req, res) => {
     const saved = await newCenter.save();
     res.status(201).json(saved);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to create coaching center', error: err.message });
+    next(err);
   }
 };
 
 // PUT /api/coaching-centers/:id
-exports.updateCoachingCenter = async (req, res) => {
+exports.updateCoachingCenter = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error('Validation Failed');
+    error.statusCode = 422;
+    error.errors = errors.array();
+    return next(error);
+  }
+
   try {
     const updated = await CoachingCenter.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).populate('courses');
 
     if (!updated) {
-      return res.status(404).json({ message: 'Coaching Center not found' });
+      const error = new Error('Coaching Center not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json(updated);
   } catch (err) {
-    res.status(400).json({ message: 'Failed to update', error: err.message });
+    next(err);
   }
 };
 
 // DELETE /api/coaching-centers/:id
-exports.deleteCoachingCenter = async (req, res) => {
+exports.deleteCoachingCenter = async (req, res, next) => {
   try {
     const deleted = await CoachingCenter.findByIdAndDelete(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Coaching Center not found' });
+      const error = new Error('Coaching Center not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({ message: 'Coaching Center deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Delete failed', error: err.message });
+    next(err);
   }
 };
