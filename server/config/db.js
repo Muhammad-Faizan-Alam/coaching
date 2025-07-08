@@ -2,33 +2,33 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
-      // useCreateIndex: true, // Uncomment if needed for older Mongoose versions
-    });
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
-    // Optional: Retry logic or graceful shutdown
-    process.exit(1); // Exit process with failure
+    process.exit(1); // Exit on connection failure
   }
 };
 
-// Handle unhandled promise rejections
+// Close MongoDB connection on app errors
+const gracefulExit = async (reason, code) => {
+  try {
+    await mongoose.connection.close();
+    console.log(`MongoDB connection closed due to ${reason}`);
+  } catch (err) {
+    console.error('Error closing MongoDB connection:', err.message);
+  } finally {
+    process.exit(code);
+  }
+};
+
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err.message);
-  mongoose.connection.close(() => {
-    process.exit(1);
-  });
+  gracefulExit('unhandled rejection', 1);
 });
 
-// Handle SIGINT (Ctrl+C) gracefully
 process.on('SIGINT', () => {
-  mongoose.connection.close(() => {
-    console.log('MongoDB connection closed due to app termination');
-    process.exit(0);
-  });
+  gracefulExit('app termination (SIGINT)', 0);
 });
 
 module.exports = connectDB;
