@@ -13,6 +13,7 @@ const { body } = require('express-validator');
 // Validation middleware
 const validateCoachingCenter = [
   body('title').notEmpty().withMessage('Title is required'),
+  body('thumbnail').notEmpty().withMessage('Thumbnail is required'),
   body('duration').optional().isNumeric().withMessage('Duration must be a number'),
   body('learners').optional().isNumeric().withMessage('Learners must be a number'),
 ];

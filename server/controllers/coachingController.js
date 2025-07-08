@@ -56,10 +56,11 @@ exports.createCoachingCenter = async (req, res, next) => {
   }
 
   try {
-    const { name, city, rating, reviews, minFee, maxFee, courses } = req.body;
+    const { name, thumbnail, city, rating, reviews, minFee, maxFee, courses } = req.body;
 
     const newCenter = new CoachingCenter({
       name,
+      thumbnail,
       city,
       rating,
       reviews,

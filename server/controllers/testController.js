@@ -51,10 +51,11 @@ exports.createTest = async (req, res, next) => {
   }
 
   try {
-    const { title, description, year, hours, questions, subjects } = req.body;
+    const { title, thumbnail, description, year, hours, questions, subjects } = req.body;
 
     const newTest = new Test({
       title,
+      thumbnail,
       description,
       year,
       hours,

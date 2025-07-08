@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const CourseSchema = new mongoose.Schema({
     title: {type: String, required: true},
+    thumbnail: {type: String, required: true},
     description: {type: String},
     duration: Number,
     learners: Number,

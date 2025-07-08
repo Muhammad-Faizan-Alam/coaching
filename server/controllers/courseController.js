@@ -59,10 +59,11 @@ exports.createCourse = async (req, res, next) => {
   }
 
   try {
-    const { title, description, duration, learners, subject, coachingCenter } = req.body;
+    const { title, thumbnail, description, duration, learners, subject, coachingCenter } = req.body;
 
     const newCourse = new Course({
       title,
+      thumbnail,
       description,
       duration,
       learners,
