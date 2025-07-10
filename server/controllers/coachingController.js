@@ -1,4 +1,5 @@
 const CoachingCenter = require('../models/CoachingCenter');
+const Review = require('../models/Review');
 const { validationResult } = require('express-validator');
 
 // GET /api/coaching-centers
@@ -9,15 +10,33 @@ exports.getAllCoachingCenters = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     let filters = {};
-    if (city) filters.city = city;
-    if (rating) filters.rating = { $gte: Number(rating) };
+    if (city) filters.city = { $regex: city, $options: 'i' };
     if (minFee) filters.minFee = { $gte: Number(minFee) };
+    if (rating) filters.rating = { $gte: Number(rating) };
 
-    const total = await CoachingCenter.countDocuments(filters);
-    const centers = await CoachingCenter.find(filters)
+    let centers = await CoachingCenter.find(filters)
       .populate('courses')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    const total = await CoachingCenter.countDocuments(filters);
+
+    for (const center of centers) {
+      const reviews = await Review.find({ coachingCenter: center._id })
+        .populate('user', 'username profileImage')
+        .sort({ createdAt: -1 });
+
+      const avgRating = reviews.length
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
+      // Update rating in DB for consistency
+      await CoachingCenter.findByIdAndUpdate(center._id, { rating: avgRating });
+
+      center.rating = avgRating.toFixed(1);
+      center.reviews = reviews;
+    }
 
     res.status(200).json({
       total,
@@ -33,12 +52,29 @@ exports.getAllCoachingCenters = async (req, res, next) => {
 // GET /api/coaching-centers/:id
 exports.getCoachingCenterById = async (req, res, next) => {
   try {
-    const center = await CoachingCenter.findById(req.params.id).populate('courses');
+    const center = await CoachingCenter.findById(req.params.id)
+      .populate('courses')
+      .lean();
+
     if (!center) {
       const error = new Error('Coaching Center not found');
       error.statusCode = 404;
       return next(error);
     }
+
+    const reviews = await Review.find({ coachingCenter: center._id })
+      .populate('user', 'username profileImage')
+      .sort({ createdAt: -1 });
+
+    const avgRating = reviews.length
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
+
+    await CoachingCenter.findByIdAndUpdate(center._id, { rating: avgRating });
+
+    center.rating = avgRating.toFixed(1);
+    center.reviews = reviews;
+
     res.status(200).json(center);
   } catch (err) {
     next(err);
@@ -56,17 +92,17 @@ exports.createCoachingCenter = async (req, res, next) => {
   }
 
   try {
-    const { name, thumbnail, city, rating, reviews, minFee, maxFee, courses } = req.body;
+    const { name, thumbnail, city, minFee, maxFee, courses } = req.body;
 
     const newCenter = new CoachingCenter({
       name,
       thumbnail,
       city,
-      rating,
-      reviews,
       minFee,
       maxFee,
       courses,
+      rating: 0,
+      reviews: [],
     });
 
     const saved = await newCenter.save();
@@ -87,7 +123,13 @@ exports.updateCoachingCenter = async (req, res, next) => {
   }
 
   try {
-    const updated = await CoachingCenter.findByIdAndUpdate(req.params.id, req.body, {
+    const updates = { ...req.body };
+
+    // Prevent manual rating or reviews update from outside
+    delete updates.rating;
+    delete updates.reviews;
+
+    const updated = await CoachingCenter.findByIdAndUpdate(req.params.id, updates, {
       new: true,
     }).populate('courses');
 

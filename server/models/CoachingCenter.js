@@ -5,7 +5,6 @@ const CoachingCenterSchema = new mongoose.Schema({
     thumbnail: { type: String, required: true },
     city: { type: String, required: true },
     rating: { type: Number, default: 0 },
-    reviews: [String],
     minFee: { type: Number, required: true },
     maxFee: { type: Number, required: true },
     courses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }]
