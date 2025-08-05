@@ -15,6 +15,10 @@ const { body } = require('express-validator');
 // Validation middleware
 const validateEnrollCourse = [
   body('studentId').notEmpty().withMessage('Please select a student.'),
+  body('name').notEmpty().withMessage('Name is required.'),
+  body('email').isEmail().withMessage('Please enter a valid email address.'),
+  body('phone').notEmpty().withMessage('Phone number is required.'),
+  body('address').notEmpty().withMessage('Address is required.'),
   body('courseId').notEmpty().withMessage('Please select a course.'),
   body('coachingCenterId').notEmpty().withMessage('Please select a coaching center.'),
 ];

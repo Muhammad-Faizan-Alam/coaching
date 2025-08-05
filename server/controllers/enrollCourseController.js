@@ -7,36 +7,42 @@ const { validationResult } = require('express-validator');
 
 // POST /api/enroll
 exports.enrollCourse = async (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
         const error = new Error('Validation Failed');
         error.statusCode = 422;
         error.errors = errors.array();
         return next(error);
-      }
-    
-      try {
-        const { studentId, courseId, coachingCenterId } = req.body;
-    
+    }
+
+    try {
+        const { studentId, name, email, phone, address, courseId, coachingCenterId } = req.body;
+
         const newEnroll = new EnrollCourse({
-          studentId, courseId, coachingCenterId
+            studentId,
+            courseId,
+            coachingCenterId,
+            name,
+            email,
+            phone,
+            address
         });
-    
+
         const saved = await newEnroll.save();
         res.status(201).json(saved);
-      } catch (err) {
+    } catch (err) {
         next(err);
-      }
+    }
 }
 
 // GET /api/enroll
 exports.getAllEnrollCourses = async (req, res, next) => {
     try {
         const enrollCourses = await EnrollCourse.find()
-        .populate('studentId')
-        .populate('courseId')
-        .populate('coachingCenterId');
-    
+            .populate('studentId')
+            .populate('courseId')
+            .populate('coachingCenterId');
+
         res.status(200).json(enrollCourses);
     } catch (err) {
         next(err);
@@ -47,16 +53,16 @@ exports.getAllEnrollCourses = async (req, res, next) => {
 exports.getEnrollCourseByStudentId = async (req, res, next) => {
     try {
         const enrollCourses = await EnrollCourse.find({ studentId: req.params.id })
-        .populate('studentId')
-        .populate('courseId')
-        .populate('coachingCenterId');
-    
+            .populate('studentId')
+            .populate('courseId')
+            .populate('coachingCenterId');
+
         if (enrollCourses.length === 0) {
             const error = new Error('No enrollments found for this student');
             error.statusCode = 404;
             return next(error);
         }
-    
+
         res.status(200).json(enrollCourses);
     } catch (err) {
         next(err);
@@ -67,16 +73,16 @@ exports.getEnrollCourseByStudentId = async (req, res, next) => {
 exports.getEnrollCourseByCourse = async (req, res, next) => {
     try {
         const enrollCourses = await EnrollCourse.find({ courseId: req.params.id })
-        .populate('studentId')
-        .populate('courseId')
-        .populate('coachingCenterId');
-    
+            .populate('studentId')
+            .populate('courseId')
+            .populate('coachingCenterId');
+
         if (enrollCourses.length === 0) {
             const error = new Error('No enrollments found for this course');
             error.statusCode = 404;
             return next(error);
         }
-    
+
         res.status(200).json(enrollCourses);
     } catch (err) {
         next(err);
@@ -87,16 +93,16 @@ exports.getEnrollCourseByCourse = async (req, res, next) => {
 exports.getEnrollCourseByCenter = async (req, res, next) => {
     try {
         const enrollCourses = await EnrollCourse.find({ coachingCenterId: req.params.id })
-        .populate('studentId')
-        .populate('courseId')
-        .populate('coachingCenterId');
-    
+            .populate('studentId')
+            .populate('courseId')
+            .populate('coachingCenterId');
+
         if (enrollCourses.length === 0) {
             const error = new Error('No enrollments found for this coaching center');
             error.statusCode = 404;
             return next(error);
         }
-    
+
         res.status(200).json(enrollCourses);
     } catch (err) {
         next(err);
