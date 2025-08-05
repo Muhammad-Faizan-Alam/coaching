@@ -9,6 +9,11 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     match: [/.+\@.+\..+/, 'Please fill a valid email address']
   },
+  role: {
+    type: String,
+    enum: ['user', 'institute', 'admin'],
+    default: 'user'
+  },
   courses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
   coachingCenters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'CoachingCenter' }],
 });
