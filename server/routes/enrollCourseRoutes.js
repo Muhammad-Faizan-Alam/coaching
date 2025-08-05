@@ -28,7 +28,7 @@ router.get('/studentId/:id', getEnrollCourseByStudentId);
 router.get('/course/:id', getEnrollCourseByCourse);
 router.get('/center/:id', getEnrollCourseByCenter);
 router.post('/', validateEnrollCourse, enrollCourse);
-router.put('/:id', validateCoachingCenter, updateEnrollCourse);
+router.put('/:id', validateEnrollCourse, updateEnrollCourse);
 router.delete('/:id', deleteEnrollCourse);
 
 module.exports = router;
