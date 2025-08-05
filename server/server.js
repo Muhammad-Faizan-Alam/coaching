@@ -10,6 +10,11 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
+
+app.get('/', (req, res) => {
+    res.send('Welcome to the Coaching Center API!');
+});
+
 app.use('/api/coaching-centers', require('./routes/coachingRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/subjects', require('./routes/subjectRoutes'));
