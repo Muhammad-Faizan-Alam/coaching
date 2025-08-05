@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const {
-  enrollCourse
+  enrollCourse,
+  updateEnrollCourse,
+  getAllEnrollCourses,
+  getEnrollCourseByStudentId,
+  getEnrollCourseByCourse,
+  getEnrollCourseByCenter,
+  deleteEnrollCourse,
 } = require('../controllers/enrollCourseController');
 
 const { body } = require('express-validator');
@@ -13,11 +19,13 @@ const validateEnrollCourse = [
   body('coachingCenterId').notEmpty().withMessage('Please select a coaching center.'),
 ];
 
-// router.get('/', getAllCourses);
-// router.get('/:id', getCourseById);
+router.get('/', getAllEnrollCourses);
+router.get('/studentId/:id', getEnrollCourseByStudentId);
+router.get('/course/:id', getEnrollCourseByCourse);
+router.get('/center/:id', getEnrollCourseByCenter);
 router.post('/', validateEnrollCourse, enrollCourse);
-// router.put('/:id', validateCoachingCenter, updateCourse);
-// router.delete('/:id', deleteCourse);
+router.put('/:id', validateCoachingCenter, updateEnrollCourse);
+router.delete('/:id', deleteEnrollCourse);
 
 module.exports = router;
 
