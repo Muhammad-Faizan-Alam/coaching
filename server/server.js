@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const serverless = require('serverless-http');
 const errorHandler = require('./middlewares/errorHandler');
 require('dotenv').config();
 require('./config/db')();
@@ -19,5 +20,6 @@ app.use('/api/enroll', require('./routes/enrollCourseRoutes'));
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Instead of app.listen
+module.exports = app;
+module.exports.handler = serverless(app);
