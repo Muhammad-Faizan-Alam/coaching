@@ -7,6 +7,6 @@ const CourseSchema = new mongoose.Schema({
     duration: Number,
     learners: Number,
     subject: [{type: mongoose.Schema.Types.ObjectId, ref: 'Subject'}],
-    coachingCenter: {type: mongoose.Schema.Types.ObjectId, ref: 'CoachingCenter'}
+    coachingCenter: [{type: mongoose.Schema.Types.ObjectId, ref: 'CoachingCenter'}]
 });
 module.exports = mongoose.model('Course', CourseSchema);
