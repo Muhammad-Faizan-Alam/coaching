@@ -69,16 +69,25 @@ exports.createCourse = async (req, res, next) => {
       duration,
       learners,
       subject,
-      coachingCenter,
+      coachingCenter, // now expects an array
     });
 
     const saved = await newCourse.save();
 
-    // Add course ID to the coaching center's courses array
-    await CoachingCenter.findByIdAndUpdate(
-      coachingCenter,
-      { $push: { courses: saved._id } }
-    );
+    // Add course ID to each coaching center's courses array
+    if (Array.isArray(coachingCenter)) {
+      for (const centerId of coachingCenter) {
+        await CoachingCenter.findByIdAndUpdate(
+          centerId,
+          { $push: { courses: saved._id } }
+        );
+      }
+    } else if (coachingCenter) {
+      await CoachingCenter.findByIdAndUpdate(
+        coachingCenter,
+        { $push: { courses: saved._id } }
+      );
+    }
 
     // Add course ID to the subject's courses array
     const Subject = require('../models/Subject');
