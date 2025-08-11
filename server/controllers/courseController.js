@@ -1,4 +1,5 @@
 const Course = require('../models/Course');
+const CoachingCenter = require('../models/CoachingCenter');
 const { validationResult } = require('express-validator');
 
 // GET /api/courses
@@ -72,6 +73,13 @@ exports.createCourse = async (req, res, next) => {
     });
 
     const saved = await newCourse.save();
+
+    // Add course ID to the coaching center's courses array
+    await CoachingCenter.findByIdAndUpdate(
+      coachingCenter,
+      { $push: { courses: saved._id } }
+    );
+
     res.status(201).json(saved);
   } catch (err) {
     next(err);
