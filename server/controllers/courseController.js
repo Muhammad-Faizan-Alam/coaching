@@ -80,6 +80,13 @@ exports.createCourse = async (req, res, next) => {
       { $push: { courses: saved._id } }
     );
 
+    // Add course ID to the subject's courses array
+    const Subject = require('../models/Subject');
+    await Subject.findByIdAndUpdate(
+      subject,
+      { $push: { courses: saved._id } }
+    );
+
     res.status(201).json(saved);
   } catch (err) {
     next(err);
