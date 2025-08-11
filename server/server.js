@@ -32,3 +32,5 @@ app.listen(6000, () => {
 // Instead of app.listen
 module.exports = app;
 module.exports.handler = serverless(app);
+
+// Ali Updated Courses POST Routes
